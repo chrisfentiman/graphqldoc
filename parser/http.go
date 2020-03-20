@@ -9,22 +9,6 @@ import (
 	"strings"
 )
 
-type Data struct {
-	Schema *Schema `json:"__schema"`
-}
-
-// Response estructura de una respuesta HTTP
-type Response struct {
-	Data   *Data                    `json:"data"`
-	Errors []map[string]interface{} `json:"errors"`
-}
-
-type IntrospectionQuery struct {
-	Query         string                 `json:"query"`
-	OperationName string                 `json:"operationName"`
-	Variables     map[string]interface{} `json:"variables"`
-}
-
 // HTTP execute query to the GraphQL endpoint
 func HTTP(endpoint string, headers []string, templates string, format bool, overwrite bool, out string, dryRun bool) {
 	var response Response
@@ -84,14 +68,6 @@ func HTTP(endpoint string, headers []string, templates string, format bool, over
 		log.Fatalf("Errors recieved when completing introspection query: %v", response.Errors)
 	}
 
-	docs := &docGenerator{
-		schema:    response.Data.Schema,
-		templates: getAbs(templates, true),
-		format:    format,
-		overwrite: overwrite,
-		dryRun:    dryRun,
-		outFiles:  outFiles(out),
-	}
-
-	docs.generateDocs()
+	doc := newGenerator(response.Data.Schema, templates, format, overwrite, out, dryRun)
+	doc.generate()
 }
