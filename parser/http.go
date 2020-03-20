@@ -9,22 +9,6 @@ import (
 	"strings"
 )
 
-type Data struct {
-	Schema *Schema `json:"__schema"`
-}
-
-// Response estructura de una respuesta HTTP
-type Response struct {
-	Data   *Data                    `json:"data"`
-	Errors []map[string]interface{} `json:"errors"`
-}
-
-type IntrospectionQuery struct {
-	Query         string                 `json:"query"`
-	OperationName string                 `json:"operationName"`
-	Variables     map[string]interface{} `json:"variables"`
-}
-
 // HTTP execute query to the GraphQL endpoint
 func HTTP(endpoint string, headers []string, templates string, format bool, overwrite bool, out string, dryRun bool) {
 	var response Response

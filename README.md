@@ -19,8 +19,8 @@ go get github.com/go-bindata/go-bindata/...
 ```
 
 ```bash
-$ go-bindata -o assets.go template/
-$ sed -i '' 's/package\ main/package\ graphqldoc/g' assets.go # Change package of assets.go file
+$ go-bindata -o parser/assets.go template/
+$ sed -i '' 's/package\ main/package\ parser/g' parser/assets.go # Change package of assets.go file
 $ cd cmd/
 $ go install -v
 ```

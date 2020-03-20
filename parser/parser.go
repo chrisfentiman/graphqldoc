@@ -11,135 +11,12 @@ import (
 	"text/template"
 )
 
-type TypeRef struct {
-	Kind   string   `json:"kind"`
-	Name   string   `json:"name"`
-	OfType *TypeRef `json:"ofType"`
-}
-
-type InputValue struct {
-	Name         string      `json:"name"`
-	Description  string      `json:"description"`
-	DefaultValue interface{} `json:"defaultValue"`
-	Type         *TypeRef    `json:"type"`
-}
-
-type TypeField struct {
-	Name              string        `json:"name"`
-	Description       string        `json:"description"`
-	Args              []*InputValue `json:"args"`
-	Type              *TypeRef      `json:"type"`
-	IsDeprecated      bool          `json:"isDeprecated"`
-	DeprecationReason string        `json:"deprecationReason"`
-}
-
-type EnumValues struct {
-	Name              string `json:"name"`
-	Description       string `json:"description"`
-	IsDeprecated      bool   `json:"isDeprecated"`
-	DeprecationReason string `json:"deprecationReason"`
-}
-
-type FullType struct {
-	Kind          string        `json:"kind"`
-	Name          string        `json:"name"`
-	Description   string        `json:"description"`
-	Fields        []*TypeField  `json:"fields"`
-	InputFields   []*InputValue `json:"inputFields"`
-	Interfaces    []*TypeRef    `json:"interfaces"`
-	EnumValues    []*EnumValues `json:"enumValues"`
-	PossibleTypes []*TypeRef    `json:"possibleTypes"`
-}
-
-type TypeDirective struct {
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Args        []*InputValue `json:"args"`
-	OnOperation bool          `json:"onOperation"`
-	onFragment  bool          `json:"onFragment"`
-	onField     bool          `json:"onField"`
-}
-
-type Schema struct {
-	QueryType        *FullType        `json:"queryType"`
-	MutationType     *FullType        `json:"mutationType"`
-	SubscriptionType *FullType        `json:"subscriptionType"`
-	Types            []*FullType      `json:"types"`
-	Directives       []*TypeDirective `json:"directives"`
-}
-
-type docGenerator struct {
-	schema    *Schema
-	templates string
-	format    bool
-	overwrite bool
-	dryRun    bool
-	outFiles  *gqlFiles
-}
-
-type gqlFiles struct {
-	dir      string
-	query    string
-	object   string
-	mutation string
-	scalar   string
-	enum     string
-	iface    string
-}
-
-var (
-	queryFile    = "query.md"
-	objectFile   = "object.md"
-	mutationFile = "mutation.md"
-	scalarFile   = "scalar.md"
-	enumFile     = "enum.md"
-	ifaceFile    = "interface.md"
-)
-
-func outFiles(out string) *gqlFiles {
-
-	dir := getAbs(out, false)
-	return &gqlFiles{
-		dir:      out,
-		query:    filepath.Join(dir, queryFile),
-		object:   filepath.Join(dir, objectFile),
-		mutation: filepath.Join(dir, mutationFile),
-		scalar:   filepath.Join(dir, scalarFile),
-		enum:     filepath.Join(dir, enumFile),
-		iface:    filepath.Join(dir, ifaceFile),
-	}
-}
-
-func getAbs(path string, ignoreEmpty bool) string {
-	if ignoreEmpty && path == "" {
-		return path
-	}
-
-	dir := path
-	if !filepath.IsAbs(dir) {
-		abs, err := filepath.Abs(dir)
-		if err != nil {
-			log.Fatalf("Unable to create an absolute path for out %s: %s", path, err)
-		}
-
-		dir = abs
-	}
-
-	return dir
-}
-
-func (d *docGenerator) genDir() {
-	if _, err := os.Stat(d.outFiles.dir); !os.IsNotExist(err) && d.overwrite {
-		os.RemoveAll(d.outFiles.dir)
-		os.Remove(d.outFiles.dir)
-	}
-
-	os.Mkdir(d.outFiles.dir, 0755)
-}
-
 func (d *docGenerator) generateDocs() {
 
-	d.genDir()
+	if err := d.mkdir(); err != nil {
+		log.Fatalf("Unable to create directory %s", err)
+	}
+
 	var (
 		scalars []*FullType
 		enums   []*FullType
@@ -324,18 +201,6 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 	return ftsChan
 }
 
-type gqlType string
-
-const (
-	query    gqlType = "query"
-	mutation gqlType = "mutation"
-	scalar   gqlType = "scalar"
-	enum     gqlType = "enum"
-	object   gqlType = "object"
-	iface    gqlType = "interface"
-	input    gqlType = "input"
-)
-
 func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 	switch gqlt {
 	case query, mutation:
@@ -441,11 +306,36 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 
 func tempGen(dir string, data string) (*template.Template, error) {
 	p, err := template.New("MD").Funcs(template.FuncMap{
+		"transform": func(to string, str string) string {
+			switch to {
+			case "lower", "lowercase", "loc":
+				return strings.ToLower(str)
+			case "upper", "UPPERCASE", "upc":
+				return strings.ToUpper(str)
+			case "title", "Title Case", "tlc":
+				return title(strings.ToLower(str))
+			case "sentence", "Sentence case", "stc":
+				return firstToUpper(strings.ToLower(str))
+			case "pascal", "PascalCase", "psc":
+				return runeMap(title(runeMap(str, []rune(" "), false)), []rune{}, true)
+			case "camel", "camelCase", "cmc":
+				// to lower and replace hyphens and underscores with spaces
+				lowerd := runeMap(strings.ToLower(str), []rune(" "), false)
+				return runeMap(firstToLower(title(lowerd)), []rune{}, true)
+			case "kebab", "kebab-case", "kbc":
+				return runeMap(strings.ToLower(str), []rune("-"), false)
+			case "snake", "snake_case", "skc":
+				return runeMap(strings.ToLower(str), []rune("_"), false)
+			default:
+				return str
+			}
+		},
 		"getType": func(t *TypeRef) interface{} {
 			value := struct {
 				Name string
 				Type string
 				Kind string
+				Dir  string
 			}{Type: "%s"}
 			for t.OfType != nil {
 				if t.Kind == "NON_NULL" {
@@ -459,13 +349,8 @@ func tempGen(dir string, data string) (*template.Template, error) {
 			value.Name = t.Name
 			value.Kind = t.Kind
 			value.Type = fmt.Sprintf(value.Type, value.Name)
-			if t.Kind == "SCALAR" {
-				value.Name = dir + "scalar#" + value.Name
-			}
-			if t.Kind == "OBJECT" {
-				value.Name = dir + "object#" + value.Name
-			}
 			value.Name = strings.Replace(strings.ToLower(value.Name), " ", "-", -1)
+			value.Dir = relativePath(dir)
 			return value
 
 		},
