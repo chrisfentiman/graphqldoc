@@ -68,14 +68,6 @@ func HTTP(endpoint string, headers []string, templates string, format bool, over
 		log.Fatalf("Errors recieved when completing introspection query: %v", response.Errors)
 	}
 
-	docs := &docGenerator{
-		schema:    response.Data.Schema,
-		templates: getAbs(templates, true),
-		format:    format,
-		overwrite: overwrite,
-		dryRun:    dryRun,
-		outFiles:  outFiles(out),
-	}
-
-	docs.generateDocs()
+	doc := newGenerator(response.Data.Schema, templates, format, overwrite, out, dryRun)
+	doc.generate()
 }

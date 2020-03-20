@@ -11,7 +11,34 @@ import (
 	"text/template"
 )
 
-func (d *docGenerator) generateDocs() {
+// newGenerator initializes a new document generator configuration based on the
+// values of the params.
+func newGenerator(schema *Schema, templateDir string, format bool, overwrite bool, outDir string, dryRun bool) *docGenerator {
+
+	if templateDir != "" {
+		path, err := absolutePath(templateDir)
+		if err != nil {
+			log.Fatalf("Unable to create an absolute path for out %s: %s", templateDir, err)
+		}
+
+		templateDir = path
+	}
+
+	return &docGenerator{
+		schema:    schema,
+		templates: templateDir,
+		format:    format,
+		overwrite: overwrite,
+		dryRun:    dryRun,
+		outFiles:  outFiles(outDir),
+	}
+}
+
+// generate is the main function - it generates
+// the documentation based on the introspection query
+// and the gqldoc files written to memory from either
+// local or a user provided directory
+func (d *docGenerator) generate() {
 
 	if err := d.mkdir(); err != nil {
 		log.Fatalf("Unable to create directory %s", err)
@@ -70,6 +97,8 @@ func (d *docGenerator) generateDocs() {
 
 }
 
+// merge merges all given channels into one channel
+// creating a fan-in pattern.
 func merge(outputsChan ...<-chan error) <-chan error {
 	wg := &sync.WaitGroup{}
 
@@ -96,6 +125,9 @@ func merge(outputsChan ...<-chan error) <-chan error {
 	return merged
 }
 
+// cleanType removes private types from
+// graphql introspection query - these types
+// will not be written to file.
 func cleanType(tfs []*TypeField) []*TypeField {
 	fields := make([]*TypeField, 0)
 	for _, field := range tfs {
@@ -107,6 +139,8 @@ func cleanType(tfs []*TypeField) []*TypeField {
 	return fields
 }
 
+// fullType writes *FullType documentation to file. FullTypes are generally
+// Root level Query or Mutations.
 func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 	ftChan := make(chan error, 100)
 
@@ -134,13 +168,13 @@ func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 			return
 		}
 
-		tmpl, err := getTemplate(d.templates, gqlt)
+		gqldoc, err := getTemplate(d.templates, gqlt)
 		if err != nil {
 			ftChan <- fmt.Errorf("Unable to get %s template: %s", gqlt, err)
 			return
 		}
 
-		t := template.Must(tempGen(d.outFiles.dir, tmpl))
+		t := template.Must(tempGen(d.outFiles.dir, gqldoc))
 		err = t.Execute(f, ft)
 		if err != nil {
 			ftChan <- fmt.Errorf("TODO: %s %s", gqlt, err)
@@ -151,15 +185,15 @@ func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 	return ftChan
 }
 
+// fullType is like fullType except it writes []*FullType documentation to file. FullTypes are generally
+// objects, scalars, input objects, enum, unions
 func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 	ftsChan := make(chan error, 100)
 
 	go func(fts []*FullType, gqlt gqlType, d *docGenerator, ftsChan chan error) {
 		defer close(ftsChan)
 
-		var (
-			file string
-		)
+		var file string
 
 		if len(fts) < 1 {
 			return
@@ -186,12 +220,12 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 			ftsChan <- fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
 
-		tmpl, err := getTemplate(d.templates, gqlt)
+		gqldoc, err := getTemplate(d.templates, gqlt)
 		if err != nil {
 			ftsChan <- fmt.Errorf("Unable to get %s template: %s", gqlt, err)
 		}
 
-		t := template.Must(tempGen(d.outFiles.dir, tmpl))
+		t := template.Must(tempGen(d.outFiles.dir, gqldoc))
 		err = t.Execute(f, fts)
 		if err != nil {
 			ftsChan <- fmt.Errorf("TODO: %s %s", gqlt, err)
@@ -201,11 +235,13 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 	return ftsChan
 }
 
+// getTemplate retrieves .gqldoc files from a specified template dir
+// or it will use the in memory templates.
 func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 	switch gqlt {
 	case query, mutation:
 		if templateDir == "" {
-			data, err := Asset("template/schema.tmpl")
+			data, err := Asset("template/schema.gqldoc")
 			if err != nil {
 				return "", err
 			}
@@ -213,7 +249,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 			return string(data), nil
 		}
 
-		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "schema.tmpl"))
+		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "schema.gqldoc"))
 		if err != nil {
 			return "", fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
@@ -221,7 +257,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 		return string(dat), nil
 	case scalar:
 		if templateDir == "" {
-			data, err := Asset("template/scalar.tmpl")
+			data, err := Asset("template/scalar.gqldoc")
 			if err != nil {
 				return "", err
 			}
@@ -229,7 +265,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 			return string(data), nil
 		}
 
-		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "scalar.tmpl"))
+		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "scalar.gqldoc"))
 		if err != nil {
 			return "", fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
@@ -237,7 +273,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 		return string(dat), nil
 	case enum:
 		if templateDir == "" {
-			data, err := Asset("template/enum.tmpl")
+			data, err := Asset("template/enum.gqldoc")
 			if err != nil {
 				return "", err
 			}
@@ -245,7 +281,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 			return string(data), nil
 		}
 
-		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "enum.tmpl"))
+		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "enum.gqldoc"))
 		if err != nil {
 			return "", fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
@@ -253,7 +289,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 		return string(dat), nil
 	case object:
 		if templateDir == "" {
-			data, err := Asset("template/object.tmpl")
+			data, err := Asset("template/object.gqldoc")
 			if err != nil {
 				return "", err
 			}
@@ -261,7 +297,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 			return string(data), nil
 		}
 
-		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "object.tmpl"))
+		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "object.gqldoc"))
 		if err != nil {
 			return "", fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
@@ -269,7 +305,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 		return string(dat), nil
 	case iface:
 		if templateDir == "" {
-			data, err := Asset("template/interface.tmpl")
+			data, err := Asset("template/interface.gqldoc")
 			if err != nil {
 				return "", err
 			}
@@ -277,7 +313,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 			return string(data), nil
 		}
 
-		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "interface.tmpl"))
+		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "interface.gqldoc"))
 		if err != nil {
 			return "", fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
@@ -285,7 +321,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 		return string(dat), nil
 	case input:
 		if templateDir == "" {
-			data, err := Asset("template/input.tmpl")
+			data, err := Asset("template/input.gqldoc")
 			if err != nil {
 				return "", err
 			}
@@ -293,7 +329,7 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 			return string(data), nil
 		}
 
-		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "input.tmpl"))
+		dat, err := ioutil.ReadFile(filepath.Join(templateDir, "input.gqldoc"))
 		if err != nil {
 			return "", fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
@@ -304,6 +340,14 @@ func getTemplate(templateDir string, gqlt gqlType) (string, error) {
 	}
 }
 
+// tempGen writes data to template in memory and returns back a
+// written template.
+//
+// tempGen also creates template helper functions, such as transform
+// which allows gqldoc writers to transform text into any of the following:
+// lowercase, UPPERCASE, Title Case, Sentence case, PascalCase, camelCase, kebab-case, snake_case
+//
+//
 func tempGen(dir string, data string) (*template.Template, error) {
 	p, err := template.New("MD").Funcs(template.FuncMap{
 		"transform": func(to string, str string) string {
@@ -330,6 +374,7 @@ func tempGen(dir string, data string) (*template.Template, error) {
 				return str
 			}
 		},
+		// TODO: revise this function
 		"getType": func(t *TypeRef) interface{} {
 			value := struct {
 				Name string
