@@ -11,6 +11,10 @@ import (
 	"text/template"
 )
 
+var (
+	private = "_"
+)
+
 // newGenerator initializes a new document generator configuration based on the
 // values of the params.
 func newGenerator(schema *Schema, templateDir string, format bool, overwrite bool, outDir string, dryRun bool) *docGenerator {
@@ -53,7 +57,7 @@ func (d *docGenerator) generate() {
 
 	for _, v := range d.schema.Types {
 		if !strings.Contains(v.Name, "_") {
-			v.Fields = cleanType(v.Fields)
+			v.Fields = cleanType(v.Fields, private)
 			switch v.Kind {
 			case "SCALAR":
 				scalars = append(scalars, v)
@@ -128,10 +132,10 @@ func merge(outputsChan ...<-chan error) <-chan error {
 // cleanType removes private types from
 // graphql introspection query - these types
 // will not be written to file.
-func cleanType(tfs []*TypeField) []*TypeField {
+func cleanType(tfs []*TypeField, comparable string) []*TypeField {
 	fields := make([]*TypeField, 0)
 	for _, field := range tfs {
-		if !strings.Contains(field.Name, "_") {
+		if !strings.Contains(field.Name, comparable) {
 			fields = append(fields, field)
 		}
 	}
@@ -160,7 +164,7 @@ func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 			return
 		}
 
-		ft.Fields = cleanType(ft.Fields)
+		ft.Fields = cleanType(ft.Fields, private)
 
 		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
@@ -206,6 +210,17 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 			file = d.outFiles.enum
 		case object:
 			file = d.outFiles.object
+
+			modified := make([]*FullType, 0)
+			for _, ft := range fts {
+				switch ft.Name {
+				case "Query", "Mutation":
+				default:
+					modified = append(modified, ft)
+				}
+			}
+
+			fts = modified
 		case iface:
 			file = d.outFiles.iface
 		// TODO: case input:
