@@ -1,0 +1,39 @@
+{
+  "name": "graphqldoc",
+  "version": "0.1.0",
+  "description": "Markdown generator for documenting GraphQL schemas",
+  "main": "index.js",
+  "goBinary": {
+    "name": "graphqldoc",
+    "path": "./bin",
+    "url": "https://github.com/chrisfentiman/graphqldoc/releases/download/v{{version}}/graphqldoc_{{version}}_{{platform}}_{{arch}}.tar.gz"
+  },
+  "scripts": {
+    "postinstall": "go-npm install",
+    "preuninstall": "go-npm uninstall"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisfentiman/graphqldoc.git"
+  },
+  "keywords": [
+    "graphql",
+    "documentation",
+    "markdown",
+    "schema",
+    "document"
+  ],
+  "author": "Mario Valentin & Chris Fentiman <chrisfentiman@protonmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chrisfentiman/graphqldoc/issues"
+  },
+  "homepage": "https://github.com/chrisfentiman/graphqldoc#readme",
+  "dependencies": {
+    "go-npm": "^0.1.9",
+    "prettier": "^1.19.1"
+  },
+  "devDependencies": {
+    "docsify": "^4.11.2"
+  }
+}
