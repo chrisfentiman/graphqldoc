@@ -238,16 +238,13 @@ func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 
 		var (
 			file string
-			gqls string
 		)
 
 		switch gqlt {
 		case query:
 			file = d.outFiles.query
-			gqls = "query"
 		case mutation:
 			file = d.outFiles.mutation
-			gqls = "mutation"
 		default:
 			return
 		}
@@ -256,20 +253,20 @@ func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 
 		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			ftChan <- fmt.Errorf("Unable to open %s markdown file: %s", gqls, err)
+			ftChan <- fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 			return
 		}
 
 		tmpl, err := getTemplate(d.templates, gqlt)
 		if err != nil {
-			ftChan <- fmt.Errorf("Unable to get %s template: %s", gqls, err)
+			ftChan <- fmt.Errorf("Unable to get %s template: %s", gqlt, err)
 			return
 		}
 
 		t := template.Must(tempGen(d.outFiles.dir, tmpl))
 		err = t.Execute(f, ft)
 		if err != nil {
-			ftChan <- fmt.Errorf("TODO: %s", gqls, err)
+			ftChan <- fmt.Errorf("TODO: %s %s", gqlt, err)
 			return
 		}
 	}(ft, gqlt, d, ftChan)
@@ -285,7 +282,6 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 
 		var (
 			file string
-			gqls string
 		)
 
 		if len(fts) < 1 {
@@ -295,17 +291,12 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 		switch gqlt {
 		case scalar:
 			file = d.outFiles.scalar
-			gqls = "scalar"
 		case enum:
 			file = d.outFiles.enum
-			gqls = "enum"
 		case object:
 			file = d.outFiles.object
-			gqls = "object"
-
 		case iface:
 			file = d.outFiles.iface
-			gqls = "interface"
 		// TODO: case input:
 		// 	file = d.outFiles.input
 		// 	gqls = "input"
@@ -315,18 +306,18 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 
 		f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
-			ftsChan <- fmt.Errorf("Unable to open %s markdown file: %s", gqls, err)
+			ftsChan <- fmt.Errorf("Unable to open %s markdown file: %s", gqlt, err)
 		}
 
 		tmpl, err := getTemplate(d.templates, gqlt)
 		if err != nil {
-			ftsChan <- fmt.Errorf("Unable to get %s template: %s", gqls, err)
+			ftsChan <- fmt.Errorf("Unable to get %s template: %s", gqlt, err)
 		}
 
 		t := template.Must(tempGen(d.outFiles.dir, tmpl))
 		err = t.Execute(f, fts)
 		if err != nil {
-			ftsChan <- fmt.Errorf("TODO: %s", gqls, err)
+			ftsChan <- fmt.Errorf("TODO: %s %s", gqlt, err)
 		}
 	}(fts, gqlt, d, ftsChan)
 
