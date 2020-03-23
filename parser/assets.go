@@ -1,6 +1,7 @@
 // Code generated for package parser by go-bindata DO NOT EDIT. (@generated)
 // sources:
 // template/enum.gqldoc
+// template/input.gqldoc
 // template/interface.gqldoc
 // template/object.gqldoc
 // template/scalar.gqldoc
@@ -97,7 +98,27 @@ func templateEnumGqldoc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/enum.gqldoc", size: 532, mode: os.FileMode(420), modTime: time.Unix(1584742050, 0)}
+	info := bindataFileInfo{name: "template/enum.gqldoc", size: 532, mode: os.FileMode(420), modTime: time.Unix(1584747376, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _templateInputGqldoc = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x7c\x50\xc1\x6a\x84\x30\x14\xbc\xe7\x2b\x06\xec\x41\x0f\xcd\x07\x08\xbd\x95\x42\x2f\xed\xa5\xf4\x52\x0a\xa6\xfa\x94\x14\x37\x2b\x1a\x0f\xcb\xcb\xfb\xf7\xc5\x18\x77\xf5\xb2\xef\x90\xcc\x4c\x32\x64\x26\x19\xde\xdd\x30\x7b\x7c\xfe\xfd\x53\xed\x27\xc5\x3c\x1a\xd7\x11\xb4\x88\xca\x32\x30\xeb\x0f\x73\x22\x11\xc5\x6c\x5b\xe8\x57\x9a\xea\xd1\x0e\xde\x9e\x9d\x08\xf3\x91\x2b\x66\x72\x8d\x88\x0a\x78\xb3\xd4\x37\x40\xc0\xd7\x65\x20\x1c\x27\x60\xe7\x4a\x92\x0a\x78\xde\x06\x3b\xfc\x48\x44\xb8\xa7\x8d\x25\xe2\xa3\x93\x48\x40\x75\xcb\x5d\x21\x80\xf9\xc9\xa3\x7c\x41\x47\x3e\xc6\xd1\xcb\x2a\xf2\xb3\xe8\x09\xff\xe6\x91\xac\x9e\x22\x7a\x8e\xdd\xb0\xf5\x6f\xcd\xdc\xfb\x6f\xd3\xcf\x24\x92\x37\x2b\x2d\xd7\xeb\xfb\xa3\x22\xfd\x45\x0c\x19\x51\xda\xae\x01\x00\x00\xff\xff\xe8\xba\x76\x4f\x71\x01\x00\x00")
+
+func templateInputGqldocBytes() ([]byte, error) {
+	return bindataRead(
+		_templateInputGqldoc,
+		"template/input.gqldoc",
+	)
+}
+
+func templateInputGqldoc() (*asset, error) {
+	bytes, err := templateInputGqldocBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "template/input.gqldoc", size: 369, mode: os.FileMode(420), modTime: time.Unix(1584994442, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -117,7 +138,7 @@ func templateInterfaceGqldoc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/interface.gqldoc", size: 661, mode: os.FileMode(420), modTime: time.Unix(1584742063, 0)}
+	info := bindataFileInfo{name: "template/interface.gqldoc", size: 661, mode: os.FileMode(420), modTime: time.Unix(1584747376, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -137,7 +158,7 @@ func templateObjectGqldoc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/object.gqldoc", size: 318, mode: os.FileMode(420), modTime: time.Unix(1584742070, 0)}
+	info := bindataFileInfo{name: "template/object.gqldoc", size: 318, mode: os.FileMode(420), modTime: time.Unix(1584747376, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -157,7 +178,7 @@ func templateScalarGqldoc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/scalar.gqldoc", size: 231, mode: os.FileMode(420), modTime: time.Unix(1584742075, 0)}
+	info := bindataFileInfo{name: "template/scalar.gqldoc", size: 231, mode: os.FileMode(420), modTime: time.Unix(1584747376, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -177,7 +198,7 @@ func templateSchemaGqldoc() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "template/schema.gqldoc", size: 692, mode: os.FileMode(420), modTime: time.Unix(1584742081, 0)}
+	info := bindataFileInfo{name: "template/schema.gqldoc", size: 692, mode: os.FileMode(420), modTime: time.Unix(1584747376, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -255,6 +276,7 @@ func AssetNames() []string {
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
 	"template/enum.gqldoc":      templateEnumGqldoc,
+	"template/input.gqldoc":     templateInputGqldoc,
 	"template/interface.gqldoc": templateInterfaceGqldoc,
 	"template/object.gqldoc":    templateObjectGqldoc,
 	"template/scalar.gqldoc":    templateScalarGqldoc,
@@ -305,6 +327,7 @@ type bintree struct {
 var _bintree = &bintree{nil, map[string]*bintree{
 	"template": &bintree{nil, map[string]*bintree{
 		"enum.gqldoc":      &bintree{templateEnumGqldoc, map[string]*bintree{}},
+		"input.gqldoc":     &bintree{templateInputGqldoc, map[string]*bintree{}},
 		"interface.gqldoc": &bintree{templateInterfaceGqldoc, map[string]*bintree{}},
 		"object.gqldoc":    &bintree{templateObjectGqldoc, map[string]*bintree{}},
 		"scalar.gqldoc":    &bintree{templateScalarGqldoc, map[string]*bintree{}},

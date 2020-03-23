@@ -15,6 +15,7 @@ var (
 	scalarFile   = "scalar.md"
 	enumFile     = "enum.md"
 	ifaceFile    = "interface.md"
+	inputFile    = "input.md"
 )
 
 // outFiles creates absolute paths to all of the markdown documents.
@@ -33,6 +34,7 @@ func outFiles(out string) *gqlFiles {
 		scalar:   filepath.Join(dir, scalarFile),
 		enum:     filepath.Join(dir, enumFile),
 		iface:    filepath.Join(dir, ifaceFile),
+		input:    filepath.Join(dir, inputFile),
 	}
 }
 

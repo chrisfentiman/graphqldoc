@@ -53,6 +53,7 @@ func (d *docGenerator) generate() {
 		enums   []*FullType
 		ifaces  []*FullType
 		objects []*FullType
+		inputs  []*FullType
 	)
 
 	for _, v := range d.schema.Types {
@@ -71,6 +72,10 @@ func (d *docGenerator) generate() {
 			case "OBJECT":
 				objects = append(objects, v)
 				break
+			case "INPUT_OBJECT":
+				inputs = append(inputs, v)
+				break
+
 			}
 		}
 	}
@@ -80,7 +85,8 @@ func (d *docGenerator) generate() {
 		d.fullTypes(scalars, scalar),
 		d.fullTypes(enums, enum),
 		d.fullTypes(ifaces, iface),
-		d.fullTypes(objects, object))
+		d.fullTypes(objects, object),
+		d.fullTypes(inputs, input))
 
 	errs := make([]error, 0)
 	for err := range chanMerged {
@@ -223,9 +229,8 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 			fts = modified
 		case iface:
 			file = d.outFiles.iface
-		// TODO: case input:
-		// 	file = d.outFiles.input
-		// 	gqls = "input"
+		case input:
+			file = d.outFiles.input
 		default:
 			return
 		}

@@ -1,0 +1,9 @@
+# Input Objects
+{{range .}}
+## {{.Name}}
+{{if .Description}}{{.Description}}
+{{end}}
+| Field  | Type               | Description      |
+| --------- | ------------------ | ---------------- |
+{{range .InputFields}}| `{{.Name}}` | {{$t := getType .Type}}[{{$t.Type}}]({{$t.Name}}) | {{.Description}} {{if .DefaultValue}}(default: {{.DefaultValue}}){{end}} |
+{{end}}{{end}}
