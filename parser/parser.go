@@ -372,7 +372,7 @@ func tempGen(dir string, data string) (*template.Template, error) {
 			case "upper", "UPPERCASE", "upc":
 				return strings.ToUpper(str)
 			case "title", "Title Case", "tlc":
-				return title(strings.ToLower(str))
+				return title(str)
 			case "sentence", "Sentence case", "stc":
 				return firstToUpper(strings.ToLower(str))
 			case "pascal", "PascalCase", "psc":

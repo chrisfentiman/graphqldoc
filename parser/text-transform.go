@@ -19,8 +19,8 @@ func firstToLower(str string) string {
 	return ""
 }
 
-func title(input string) string {
-	words := strings.Fields(input)
+func title(str string) string {
+	words := strings.Fields(strings.ToLower(str))
 	smallwords := " a an on the to "
 
 	for index, word := range words {
@@ -33,24 +33,45 @@ func title(input string) string {
 	return strings.Join(words, " ")
 }
 
-// String Split & Converts
-// Removes or replaces Spaces, hyphens, and underscores from strings
+// runeMap removes or replaces spaces, hyphens, and underscores from strings.
 // Hyphens and Underscores will be removed and a space will be added
-// Unless force is true. Force always removes spaces
-func runeMap(str string, replaceWith []rune, force bool) string {
+// Unless trim is true which trims all whitespace
+func runeMap(str string, replaceWith []rune, trim bool) string {
+	var previous rune
+	isOneOf := func(r rune) bool {
+		return (r == 95 || unicode.IsSpace(r) || unicode.Is(unicode.Hyphen, r))
+	}
 	return strings.Map(func(r rune) rune {
-		if unicode.Is(unicode.Hyphen, r) || string(r) == "_" || unicode.IsSpace(r) {
+		defer func() {
+			previous = r
+		}()
+
+		if isOneOf(r) {
 			switch {
-			case force:
+			case trim, !trim && isOneOf(previous):
 				return -1
-			case !emptyRune(replaceWith) && !force:
-				return replaceWith[0]
+			case r == 95 && !trim && !isOneOf(previous):
+				if !emptyRune(replaceWith) {
+					return replaceWith[0]
+				}
+				return 32
+			case unicode.IsSpace(r) && !trim && !isOneOf(previous):
+				if !emptyRune(replaceWith) {
+					return replaceWith[0]
+				}
+				return r
+			case unicode.Is(unicode.Hyphen, r) && !trim && !isOneOf(previous):
+				if !emptyRune(replaceWith) {
+					return replaceWith[0]
+				}
+				return 32
 			default:
 				return r
 			}
 		}
 
 		return r
+
 	}, str)
 }
 
