@@ -181,7 +181,7 @@ func (d *docGenerator) fullType(ft *FullType, gqlt gqlType) <-chan error {
 		t := template.Must(tempGen(d.outFiles.dir, gqldoc))
 		err = t.Execute(f, ft)
 		if err != nil {
-			ftChan <- fmt.Errorf("TODO: %s %s", gqlt, err)
+			ftChan <- fmt.Errorf("Unable to write graphql type %s to docs %s", gqlt, err)
 			return
 		}
 	}(ft, gqlt, d, ftChan)
@@ -243,7 +243,7 @@ func (d *docGenerator) fullTypes(fts []*FullType, gqlt gqlType) <-chan error {
 		t := template.Must(tempGen(d.outFiles.dir, gqldoc))
 		err = t.Execute(f, fts)
 		if err != nil {
-			ftsChan <- fmt.Errorf("TODO: %s %s", gqlt, err)
+			ftsChan <- fmt.Errorf("Unable to write graphql type %s to docs %s", gqlt, err)
 		}
 	}(fts, gqlt, d, ftsChan)
 
@@ -372,7 +372,7 @@ func tempGen(dir string, data string) (*template.Template, error) {
 			case "upper", "UPPERCASE", "upc":
 				return strings.ToUpper(str)
 			case "title", "Title Case", "tlc":
-				return title(strings.ToLower(str))
+				return title(str)
 			case "sentence", "Sentence case", "stc":
 				return firstToUpper(strings.ToLower(str))
 			case "pascal", "PascalCase", "psc":
@@ -416,7 +416,7 @@ func tempGen(dir string, data string) (*template.Template, error) {
 		},
 	}).Parse(data)
 	if err != nil {
-		log.Fatalf("TODO: %s", err)
+		log.Fatalf("Unable to write using template %s", err)
 	}
 	return p, err
 }
