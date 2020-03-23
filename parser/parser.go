@@ -22,7 +22,7 @@ func newGenerator(schema *Schema, templateDir string, format bool, overwrite boo
 	if templateDir != "" {
 		path, err := absolutePath(templateDir)
 		if err != nil {
-			log.Fatalf("Unable to create an absolute path for out %s: %s", templateDir, err)
+			log.Fatalf("Unable to find the template directory of %s: %s", templateDir, err)
 		}
 
 		templateDir = path
