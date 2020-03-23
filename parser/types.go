@@ -70,6 +70,7 @@ type gqlFiles struct {
 	dir      string
 	query    string
 	object   string
+	input    string
 	mutation string
 	scalar   string
 	enum     string
