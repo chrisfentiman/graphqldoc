@@ -34,6 +34,6 @@
     "prettier": "^1.19.1"
   },
   "devDependencies": {
-    "docsify": "^4.11.2"
+    "docsify": "^4.12.0"
   }
 }
